@@ -1,20 +1,14 @@
-import React, { useEffect, useState } from "react";
+import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 
-const App = () => {
-  const [message, setMessage] = useState("");
+import Home from "./pages/Home";
+import React from "react";
 
-  useEffect(() => {
-    fetch("/api/hello")
-      .then((response) => response.json())
-      .then((data) => setMessage(data.message));
-  }, []);
-
-  return (
-    <div style={{ padding: "20px", textAlign: "center" }}>
-      <h1>T2Eval</h1>
-      <p>{message}</p>
-    </div>
-  );
-};
+const App = () => (
+  <Router>
+    <Routes>
+      <Route path="/" element={<Home />} />
+    </Routes>
+  </Router>
+);
 
 export default App;
