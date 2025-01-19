@@ -1,4 +1,15 @@
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  CardMedia,
+  Stack,
+  Typography,
+} from "@mui/material";
 import React, { useState } from "react";
+
+import ReactMarkdown from "react-markdown";
 
 const ImageUpload = () => {
   const [selectedImage, setSelectedImage] = useState(null);
@@ -65,38 +76,109 @@ const ImageUpload = () => {
   };
 
   return (
-    <div style={{ padding: "20px", textAlign: "center" }}>
-      <h1>Image Upload</h1>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-          style={{ marginBottom: "10px" }}
-        />
-        {uploadStatus && <p style={{ color: "red" }}>{uploadStatus}</p>}
-        {preview && (
-          <div>
-            <h2>Preview:</h2>
-            <img
-              src={preview}
-              alt="Selected Preview"
-              style={{ maxWidth: "30%", maxHeight: "30%", marginTop: "10px" }}
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        minHeight: "100vh", 
+      }}
+    >
+      {/* Dotted Box */}
+      <Box
+        sx={{
+          padding: "10px",
+          textAlign: "center",
+          width: "60%",
+          border: "2px dotted #ccc",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+        }}
+      >
+        <Typography variant="body2" component="h1" gutterBottom>
+          upload image to convert to tactile graphic
+        </Typography>
+        <form>
+          <Stack spacing={2} alignItems="center">
+            <input
+              id="file-input"
+              type="file"
+              accept="image/*"
+              style={{ display: "none" }}
+              onChange={handleFileChange}
             />
-          </div>
-        )}
-        <button type="submit" style={{ marginTop: "10px" }}>
-          Start Tactile Evaluation
-        </button>
-      </form>
-      {evaluationResult && (
-        <div style={{ marginTop: "20px" }}>
-          <h2>Evaluation Result:</h2>
-          <p>{evaluationResult}</p>
-        </div>
+            <label htmlFor="file-input">
+              <Button variant="contained" component="span" color="primary">
+                Choose Image
+              </Button>
+            </label>
+            {uploadStatus && (
+              <Typography variant="body2" color="error">
+                {uploadStatus}
+              </Typography>
+            )}
+            {preview && (
+              <Card sx={{ maxWidth: 300 }}>
+                <CardMedia
+                  component="img"
+                  image={preview}
+                  alt="Selected Preview"
+                />
+                <CardContent>
+                  <Typography variant="body2" color="textSecondary">
+                    Preview of your uploaded image.
+                  </Typography>
+                </CardContent>
+              </Card>
+            )}
+          </Stack>
+        </form>
+      </Box>
+
+      {/* Evaluation Result */}
+      {selectedImage && (
+        <Box
+          sx={{
+            textAlign: "center",
+            border: "2px solid #ccc",
+            borderRadius: "8px",
+            padding: "16px",
+            width: "60%",
+            margin: "10px auto", // Center horizontally with vertical margin
+          }}
+        >
+          {/* Title */}
+          <Typography variant="body2" component="h2" sx={{ fontWeight: "bold", textAlign: "start" }}>
+            Tactile Graphic Evaluation Result
+          </Typography>
+
+          {/* Markdown Content */}
+          {evaluationResult && (
+            <Typography
+              component="div"
+              variant="body2"
+              sx={{ textAlign: "left", marginTop: "20px" }}
+            >
+              <ReactMarkdown>{evaluationResult}</ReactMarkdown>
+            </Typography>
+          )}
+
+          {/* Evaluate Button */}
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            sx={{ marginTop: "20px"}}
+            onClick={handleSubmit} // Trigger form submission
+          >
+            Evaluate Tactile Compatibility
+          </Button>
+        </Box>
       )}
-    </div>
-  );
+          </Box>
+        );
 };
 
 export default ImageUpload;
