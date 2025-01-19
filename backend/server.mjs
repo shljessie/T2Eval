@@ -25,13 +25,32 @@ app.prepare().then(() => {
   server.use(express.json());
 
   server.post("/api/evaluate-image", upload.single("image"), async (req, res) => {
-    const { prompt } = req.body;
 
     if (!req.file) {
       return res.status(400).json({ error: "'image' is required" });
     }
 
-    const userPrompt = prompt || "evaluate image";
+    const userPrompt = `
+    Evaluate the provided image for its suitability as a tactile graphic, considering the following criteria:
+    
+    1. **General Style**: 
+       Assess whether the image is a tactile graphic. No color, patterns and line drawings. Suitable for a tactile graphic.
+    
+    2. **Perspective**: 
+       Determine if the image uses a flat or simplified perspective suitable for tactile interpretation, avoiding 3D effects or complicated angles.
+    
+    3. **Line Thickness**: 
+       Evaluate whether the line thickness is consistent and bold enough to be easily distinguishable by touch, avoiding lines that are too thin or too dense.
+    
+    4. **Patterns**: 
+       Check if the patterns used are clear and tactilely distinguishable, ensuring that similar patterns are not placed adjacent to each other and that they follow tactile graphic design conventions.
+
+    5. **Suitability Level**: 1) Not Suitable at all - upload a new Image (format font in markdown red), 2) Suitable with Adjustments (format font in markdown yellow), 3) Suitable (format font in markdown green)
+
+    Response Format: 
+    Evaluate the image for its suitability as a tactile graphic, providing one simple, constructive sentence for each category
+    Include a final Suitability Level
+    `;    
 
     try {
       const vertexAI = new VertexAI({
@@ -40,7 +59,7 @@ app.prepare().then(() => {
       });
 
       const generativeVisionModel = vertexAI.getGenerativeModel({
-        model: "gemini-1.5-flash-001",
+        model: "gemini-1.5-pro",
       });
 
       // Encode the image file as base64
