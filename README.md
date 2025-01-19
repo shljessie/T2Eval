@@ -24,27 +24,35 @@ React Router DOM
 
 ---
 
-## To-Do List (Jan 15th)
+## To-Do List
 
 ### **Frontend**
 - [ ] Create UI for:
-  - [ ] Image upload with drag-and-drop.
+  - [x] Image upload with drag-and-drop.
   - [ ] Drawing canvas.
   - [ ] Displaying GenAI-generated images.
 - [ ] Add image preview and editing options.
+- [ ] Accessibility Check for User FLow
 
 ### **Backend**
-- [ ] Research Gemini API:
-  - [ ] Supported formats (PNG/JPG/SVG/URLs).
-  - [ ] Integration requirements.
+- [x] Research Gemini API:
+  - [x] Supported formats (PNG/JPG/SVG/URLs).
+  - [x] Integration requirements.
 - [ ] Set up image storage:
   - [ ] Save images as PNG/JPG or generate URLs.
   - [ ] Test image upload and storage.
 
-### **Integration**
-- [ ] Connect backend to Gemini API.
-- [ ] Process and send images to the API.
-- [ ] Handle API responses and errors.
+### **Deployment Plan**
+- [] Create Deployment Plan for Editing Images
+- [] Replace the use of dotenv for managing environment variables with a secrets
+- [] For file uploads, local storage using multer is not ideal in production; instead, integrate with a cloud storage service like Google Cloud Storage or Amazon S3
+- [] Update code to use the new secrets and image storage manager once deployment is set
+- [] Deployment Options check
+
+
+### **Research Plan**
+- [] Communication URL Link?
+- [] Prompt Testing for Tactile Evaluation
 
 ---
 
