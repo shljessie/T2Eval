@@ -1,3 +1,5 @@
+import { AutoProcessor, RawImage, SamModel, Tensor, env } from "@xenova/transformers";
+
 import { VertexAI } from "@google-cloud/vertexai";
 import dotenv from "dotenv";
 import express from "express";
@@ -20,37 +22,48 @@ const port = 3000;
 const uploadDir = path.join(__dirname, "uploads");
 const upload = multer({ dest: uploadDir });
 
+env.allowLocalModels = false; // Disable local model loading
+
+// Singleton class for SegmentAnything
+class SegmentAnythingSingleton {
+  static model_id = "Xenova/slimsam-77-uniform";
+  static model;
+  static processor;
+
+  static async getInstance() {
+    if (!this.model) {
+      this.model = await SamModel.from_pretrained(this.model_id, {
+        quantized: true,
+      });
+    }
+    if (!this.processor) {
+      this.processor = await AutoProcessor.from_pretrained(this.model_id);
+    }
+
+    return { model: this.model, processor: this.processor };
+  }
+}
+
 app.prepare().then(() => {
   const server = express();
   server.use(express.json());
 
+  // Evaluate Image Endpoint
   server.post("/api/evaluate-image", upload.single("image"), async (req, res) => {
-
     if (!req.file) {
       return res.status(400).json({ error: "'image' is required" });
     }
 
     const userPrompt = `
     Evaluate the provided image for its suitability as a tactile graphic, considering the following criteria:
-    
-    1. **General Style**: 
-       Assess whether the image is a tactile graphic. No color, patterns and line drawings. Suitable for a tactile graphic.
-    
-    2. **Perspective**: 
-       Determine if the image uses a flat or simplified perspective suitable for tactile interpretation, avoiding 3D effects or complicated angles.
-    
-    3. **Line Thickness**: 
-       Evaluate whether the line thickness is consistent and bold enough to be easily distinguishable by touch, avoiding lines that are too thin or too dense.
-    
-    4. **Patterns**: 
-       Check if the patterns used are clear and tactilely distinguishable, ensuring that similar patterns are not placed adjacent to each other and that they follow tactile graphic design conventions.
+    1. General Style: No color, patterns, and line drawings.
+    2. Perspective: Should be flat or simplified for tactile interpretation.
+    3. Line Thickness: Lines should be bold and distinguishable by touch.
+    4. Patterns: Patterns should be tactilely distinguishable and not adjacent.
+    5. Suitability Level: 1) Not Suitable, 2) Suitable with Adjustments, 3) Suitable.
 
-    5. **Suitability Level**: 1) Not Suitable at all - upload a new Image (format font in markdown red), 2) Suitable with Adjustments (format font in markdown yellow), 3) Suitable (format font in markdown green)
-
-    Response Format: 
-    Evaluate the image for its suitability as a tactile graphic, providing one simple, constructive sentence for each category
-    Include a final Suitability Level
-    `;    
+    Response Format: Constructive sentences for each category, and a final suitability level.
+    `;
 
     try {
       const vertexAI = new VertexAI({
@@ -62,7 +75,6 @@ app.prepare().then(() => {
         model: "gemini-1.5-pro",
       });
 
-      // Encode the image file as base64
       const base64Data = fs.readFileSync(req.file.path).toString("base64");
 
       const request = {
