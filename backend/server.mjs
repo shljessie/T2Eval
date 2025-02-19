@@ -1,11 +1,8 @@
-import { AutoProcessor, RawImage, SamModel, Tensor, env } from "@xenova/transformers";
-
 import { VertexAI } from "@google-cloud/vertexai";
 import dotenv from "dotenv";
 import express from "express";
 import { fileURLToPath } from "url";
 import fs from "fs";
-import multer from "multer";
 import next from "next";
 import path from "path";
 
@@ -19,50 +16,27 @@ const app = next({ dev });
 const handle = app.getRequestHandler();
 const port = 3000;
 
-const uploadDir = path.join(__dirname, "uploads");
-const upload = multer({ dest: uploadDir });
-
-env.allowLocalModels = false; // Disable local model loading
-
-// Singleton class for SegmentAnything
-class SegmentAnythingSingleton {
-  static model_id = "Xenova/slimsam-77-uniform";
-  static model;
-  static processor;
-
-  static async getInstance() {
-    if (!this.model) {
-      this.model = await SamModel.from_pretrained(this.model_id, {
-        quantized: true,
-      });
-    }
-    if (!this.processor) {
-      this.processor = await AutoProcessor.from_pretrained(this.model_id);
-    }
-
-    return { model: this.model, processor: this.processor };
-  }
-}
-
 app.prepare().then(() => {
   const server = express();
   server.use(express.json());
 
-  // Evaluate Image Endpoint
-  server.post("/api/evaluate-image", upload.single("image"), async (req, res) => {
-    if (!req.file) {
-      return res.status(400).json({ error: "'image' is required" });
+  /**
+   * 📌 API: Evaluate Image for Tactile Graphics
+   * Accepts an uploaded image and evaluates if it can be used for tactile graphics.
+   */
+  server.post("/api/evaluate-image", async (req, res) => {
+    if (!req.body.image) {
+      return res.status(400).json({ error: "'image' base64 data is required" });
     }
 
     const userPrompt = `
-    Evaluate the provided image for its suitability as a tactile graphic, considering the following criteria:
-    1. General Style: No color, patterns, and line drawings.
-    2. Perspective: Should be flat or simplified for tactile interpretation.
-    3. Line Thickness: Lines should be bold and distinguishable by touch.
-    4. Patterns: Patterns should be tactilely distinguishable and not adjacent.
-    5. Suitability Level: 1) Not Suitable, 2) Suitable with Adjustments, 3) Suitable.
+    Evaluate the provided image for its suitability as a tactile graphic, considering the following:
+    - General Style: Should be suitable for tactile representation.
+    - Line Thickness: Bold and distinguishable by touch.
+    - Patterns: Clear and tactilely differentiable.
+    - Perspective: Should be simplified and clear.
 
-    Response Format: Constructive sentences for each category, and a final suitability level.
+    Provide a structured response with suggestions if improvements are needed.
     `;
 
     try {
@@ -75,22 +49,13 @@ app.prepare().then(() => {
         model: "gemini-1.5-pro",
       });
 
-      const base64Data = fs.readFileSync(req.file.path).toString("base64");
-
       const request = {
         contents: [
           {
             role: "user",
             parts: [
-              {
-                inlineData: {
-                  data: base64Data,
-                  mimeType: req.file.mimetype, // Pass correct MIME type
-                },
-              },
-              {
-                text: userPrompt,
-              },
+              { text: userPrompt },
+              { inlineData: { data: req.body.image, mimeType: req.body.mimeType } },
             ],
           },
         ],
@@ -98,21 +63,71 @@ app.prepare().then(() => {
 
       const response = await generativeVisionModel.generateContent(request);
 
-      const aggregatedResponse = response.response;
       const fullTextResponse =
-        aggregatedResponse.candidates[0]?.content?.parts[0]?.text || "No response received";
+        response.response.candidates[0]?.content?.parts[0]?.text || "No response received";
 
       res.json({ data: fullTextResponse });
     } catch (error) {
       console.error("Error during image evaluation:", error);
       res.status(500).json({ error: "Failed to evaluate the image" });
-    } finally {
-      setTimeout(() => {
-        fs.unlink(path.join(uploadDir, req.file.filename), (err) => {
-          if (err) console.error("Failed to delete temporary file:", err);
-        });
-      }, 60000);
     }
+  });
+
+  /**
+   * 📌 API: Process SVG with AI
+   * Accepts raw SVG code and a user prompt to analyze, optimize, or modify the SVG.
+   */
+  server.post("/api/process-svg", async (req, res) => {
+    const { svgCode, prompt } = req.body;
+
+    if (!svgCode) {
+      return res.status(400).json({ error: "SVG code is required." });
+    }
+
+    const defaultPrompt = `
+    Analyze and optimize the given SVG code. If the user specifies modifications, apply them.
+    Otherwise, provide insights on how to make the SVG more efficient and readable.
+    `;
+
+    try {
+      const vertexAI = new VertexAI({
+        project: process.env.GOOGLE_PROJECT_ID,
+        location: "us-central1",
+      });
+
+      const generativeTextModel = vertexAI.getGenerativeModel({
+        model: "gemini-1.5-pro",
+      });
+
+      const request = {
+        contents: [
+          {
+            role: "user",
+            parts: [
+              { text: prompt || defaultPrompt },
+              { text: `Here is the SVG code:\n\n${svgCode}` },
+            ],
+          },
+        ],
+      };
+
+      const response = await generativeTextModel.generateContent(request);
+
+      const processedSVG =
+        response.response.candidates[0]?.content?.parts[0]?.text || "No response received";
+
+      res.json({ svg: processedSVG });
+    } catch (error) {
+      console.error("Error processing SVG with AI:", error);
+      res.status(500).json({ error: "Failed to process SVG with AI." });
+    }
+  });
+
+  /**
+   * 📌 Default Next.js Request Handler
+   */
+  server.all("*", (req, res) => {
+    return handle(req, res);
   });
 
   server.listen(port, () => {
