@@ -1,0 +1,70 @@
+{
+  "general_guidelines": {
+    "blank_space": "Blank space should be used to create a break between adjacent textures or where lines cross other lines or textures.",
+    "max_textures": "A graphic should contain no more than five different area textures.",
+    "symbol_size_variation": "Symbols of the same type must vary from one another in size by 25 to 30 percent to be perceived as different in size by most users."
+  },
+  "lines": {
+    "primary": {
+      "length": "Minimum of 1/2 inch (1.25 centimeters)."
+    },
+    "dashed_primary": {
+      "dash_length": "1/4 to 3/8 inch (6 millimeters to 1 centimeter)",
+      "spacing": "Spaces approximately half the length of the dash."
+    },
+    "locational_secondary": {
+      "tick_marks": "1/2 inch (1.25 centimeters) or 1/4 inch (6 millimeters) on each side of the line.",
+      "significance": "Shown as less significant than primary lines on the tactile graphic."
+    },
+    "lead_lines": {
+      "significance": "Must be the least significant line in the graphic.",
+      "preferred_length": "Minimum 3/4 inch (2 centimeters), maximum 1-1/2 inches (3.75 centimeters).",
+      "arrowhead": "No arrowhead at the end.",
+      "placement": "One end should touch the component it identifies, the other end should be at least 1/8 inch (3 millimeters) from the braille label."
+    }
+  },
+  "design_principles": {
+    "2.10": "If the concept of depth is not required, a 3-dimensional view should be changed to a 2-dimensional view.",
+    "2.11": "Clarity of components is improved by creating a break (blank space) between adjacent textures or where lines cross other lines or textures.",
+    "2.12": "If the reader is required to measure a line or an object, the line or object should not be lengthened or enlarged and must be raised and designed in a way that permits measurement with a braille ruler.",
+    "2.13": "If the reader is required to measure distance, the scale and graphic must be revised proportionately."
+  },
+  "areas": {
+    "minimum_size": "1/4 square inch (6 square millimeters).",
+    "tactual_contrast": "Very small areas are more easily read if raised above other areas to increase contrast or shown below another area that is raised."
+  },
+  "grid": {
+    "less_significant": "Grid lines must be less significant than other information on the graph.",
+    "spacing": "Grid lines should be no closer than 3/8 inch (1 centimeter) to prevent looking like an area texture."
+  },
+  "arrows": {
+    "composition": "An arrow should be comprised of a shaft and either an elongated solid triangle or an open arrowhead.",
+    "shaft": "May be solid or broken, but should match the arrowhead in weight."
+  },
+  "point_symbols": {
+    "minimum_diameter": "1/4 inch (6 millimeters).",
+    "spacing": "Minimum of 1/8 inch (3 millimeters) from other components."
+  },
+  "labels": {
+    "spacing": "Minimum of 1/8 inch (3 millimeters) to a maximum of 1/4 inch (6 millimeters) from other components.",
+    "lead_line_requirement": "If the label cannot fit within spacing guidelines, a 3/4-inch (2 centimeters) lead line must be used."
+  },
+  "paper_size": {
+    "consistency": "Graphics in the same volume or binder should maintain the same overall paper size for consistency.",
+    "textbook_standard": "Usually 11.5 by 11 inches (29 by 28 centimeters).",
+    "foldable_flaps": "Allowed when graphics exceed standard size."
+  },
+  "simplification": {
+    "3.6": "Many print illustrations are too complex to show tactually without simplification.",
+    "3.9": "To reduce clutter, many complex diagrams should be divided into sections or separated into layers of information."
+  },
+  "keys_and_legends": {
+    "5.7": "Keys should be listed in the order: area textures, line textures, point symbols, alphabetic key, numeric key.",
+    "5.8": "Alphabetic and numeric keys are used when space does not allow labels within the graphic."
+  },
+  "graphic_symbols_page": {
+    "5.14": "Area, line, or point symbols that are consistently used should be placed on the Graphic Symbols page.",
+    "5.14.1": "This page should follow the Special Symbols page.",
+    "5.14.2": "Alphabetic key symbols (e.g., ISO abbreviations for countries) should also be included."
+  }
+}
