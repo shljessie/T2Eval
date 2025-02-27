@@ -1,7 +1,11 @@
-import { Box, Button, Card, CardContent, Typography } from "@mui/material";
+import { Box, Button, Card, CardContent, CircularProgress, Typography, Grid, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import React, { useCallback, useState } from "react";
 import { parseSync, stringify } from "svgson";
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import WarningIcon from '@mui/icons-material/Warning';
 
+import NavBar from "./NavBar";
 import tactileRules from "../tactileRules.json";
 
 /************************************************
@@ -33,7 +37,6 @@ const categorizeElements = (elements) => {
 const inferProperties = (type, attributes) => {
   const props = [];
 
-  // e.g. "line" or "dashed_line"
   if (type === "line") {
     props.push("line");
     if (attributes.strokeDasharray) {
@@ -44,7 +47,6 @@ const inferProperties = (type, attributes) => {
   } else if (type === "text") {
     props.push("label");
   } else if (type === "path") {
-    // Heuristic: If fill is not 'none', or path ends in z => shape, else line
     const fill = (attributes.fill || "").trim().toLowerCase();
     const d = (attributes.d || "").trim();
     const endsClosed = d.endsWith("z") || d.endsWith("Z");
@@ -54,7 +56,6 @@ const inferProperties = (type, attributes) => {
     } else if (attributes.stroke && attributes.stroke !== "none") {
       props.push("line");
     } else {
-      // fallback
       props.push("shape");
     }
   }
@@ -68,7 +69,6 @@ const inferProperties = (type, attributes) => {
 const checkLocalRules = (elementId, elementProps) => {
   const issues = [];
 
-  // For each property, see what rules apply
   if (elementProps.includes("line")) {
     (tactileRules.lines?.primary_lines || []).forEach((r) => {
       issues.push(r.rule);
@@ -118,16 +118,6 @@ const callGeminiForIssues = async (id, snippet, localIssues) => {
     const data = await response.json();
     const rawText = data.svg || "No AI response found.";
 
-    // We can parse the rawText. For example, let's do a naive approach:
-    // - If the AI returns something like:
-    //   Issues:
-    //   1) ...
-    //   2) ...
-    //
-    //   Suggestions:
-    //   ...
-    //
-    // We'll parse it out:
     let combinedIssues = [...localIssues];
     let suggestions = "";
 
@@ -153,19 +143,19 @@ const callGeminiForIssues = async (id, snippet, localIssues) => {
       }
     }
 
-    // Ensure uniqueness in issues
     combinedIssues = [...new Set(combinedIssues)];
 
     return { issues: combinedIssues, suggestions: suggestions.trim() };
   } catch (err) {
     console.error("Gemini error:", err);
-    // If we fail, just return local issues
     return { issues: localIssues, suggestions: "Gemini call failed." };
   }
 };
 
 const SVGUpload = () => {
   const [report, setReport] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [uploadedSVG, setUploadedSVG] = useState(null);
 
   const handleFileChange = useCallback(async (e) => {
     const file = e.target.files[0];
@@ -173,29 +163,22 @@ const SVGUpload = () => {
       alert("Please upload a valid SVG file!");
       return;
     }
-
+    setLoading(true);
     try {
       const reader = new FileReader();
       reader.onload = async (evt) => {
         try {
           const svgString = evt.target.result;
+          setUploadedSVG(svgString);
           const parsed = parseSync(svgString);
 
-          // Step A: Collect elements by ID
           const categorized = categorizeElements(parsed.children);
 
-          // Step B: For each element, run local checks + Gemini
           const tasks = Object.entries(categorized).map(async ([id, obj]) => {
             const { type, original, attributes } = obj;
-            // 1) Infer properties
             const props = inferProperties(type, attributes);
-
-            // 2) Local issues
             const localIssues = checkLocalRules(id, props);
-
-            // 3) AI check (Gemini) merges local + AI issues
             const { issues, suggestions } = await callGeminiForIssues(id, original, localIssues);
-
             return [id, { type, svgSnippet: original, issues, suggestions }];
           });
 
@@ -208,91 +191,170 @@ const SVGUpload = () => {
           setReport(finalReport);
         } catch (err) {
           console.error("Failed to parse or process the SVG:", err);
+        } finally {
+          setLoading(false);
         }
       };
       reader.readAsText(file);
     } catch (err) {
       console.error("Could not read file:", err);
+      setLoading(false);
     }
   }, []);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", p: 2 }}>
-      <Typography variant="h6">Upload an SVG (Hybrid Tactile Checks + Gemini)</Typography>
+    <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", p: 0 }}>
+      <NavBar />
 
       <input
         id="file-input"
         type="file"
         accept=".svg"
         onChange={handleFileChange}
-        style={{ display: "none" }}
+        style={{ display: "none", alignText: "center" }}
       />
-      <label htmlFor="file-input">
-        <Button variant="contained" component="span" color="primary" sx={{ mt: 2 }}>
-          Upload SVG
+      <label htmlFor="file-input" sx={{ display: "flex", alignText: "center" }}>
+        <Button variant="contained" component="span" color="primary" sx={{ mt: 5 }}>
+          Upload SVG to Evaluate Tactile Graphic
         </Button>
       </label>
+
+      {uploadedSVG && (
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="h6">Uploaded Tactile Graphic</Typography>
+          <Box
+            sx={{
+              border: "1px solid #ccc",
+              display: "inline-block",
+              p: 2,
+              width: '60%',
+              "& svg": { maxWidth: "100%", height: "auto" },
+            }}
+            dangerouslySetInnerHTML={{ __html: uploadedSVG }}
+          />
+        </Box>
+      )}
+
+      {loading && (
+        <Box sx={{ mt: 2, textAlign: "center" }}>
+          <CircularProgress />
+          <Typography variant="body2" sx={{ mt: 1 }}>
+            Processing SVG, please wait...
+          </Typography>
+        </Box>
+      )}
 
       {report && (
         <Box sx={{ mt: 2, width: "80%", textAlign: "left" }}>
           <Typography variant="h6">Evaluation Report</Typography>
+          <Grid container spacing={2}>
+            {Object.entries(report).map(([id, data]) => {
+              const { type, svgSnippet, issues, suggestions } = data;
+              const passed = issues.length === 0;
+              const hasLongReport = issues.length > 3 || suggestions.length > 100;
+              return (
+                <Grid item xs={12} sm={4} key={id}>
+                  <Card>
+                    <CardContent>
+                      <Box sx={{ display: "flex", alignItems: "center" }}>
+                        {passed ? (
+                          <CheckCircleIcon sx={{ color: "green", mr: 1 }} />
+                        ) : (
+                          <WarningIcon sx={{ color: "orange", mr: 1 }} />
+                        )}
+                        <Typography variant="subtitle1">Element ID: {id}</Typography>
+                      </Box>
+                      <Typography variant="body2">Type: {type}</Typography>
 
-          {Object.entries(report).map(([id, data]) => {
-            const { type, svgSnippet, issues, suggestions } = data;
-            return (
-              <Card key={id} sx={{ mt: 2 }}>
-                <CardContent>
-                  <Typography variant="subtitle1">Element ID: {id}</Typography>
-                  <Typography variant="body2">Type: {type}</Typography>
-
-                  <Typography variant="h6" sx={{ mt: 2 }}>
-                    SVG Element
-                  </Typography>
-                  <div
-                    style={{ border: "1px solid #ccc", display: "inline-block", padding: 4 }}
-                    dangerouslySetInnerHTML={{
-                      __html: `<svg 
-                                 xmlns="http://www.w3.org/2000/svg"
-                                 style='max-width:200px; max-height:200px; overflow:auto;'
-                               >
-                                 ${svgSnippet}
-                               </svg>`
-                    }}
-                  />
-
-                  {/* Issues (merged local + Gemini) */}
-                  {issues.length > 0 ? (
-                    <>
                       <Typography variant="h6" sx={{ mt: 2 }}>
-                        Issues
+                        SVG Element
                       </Typography>
-                      <ul style={{ marginTop: 8 }}>
-                        {issues.map((issue, idx) => (
-                          <li key={idx}>{issue}</li>
-                        ))}
-                      </ul>
-                    </>
-                  ) : (
-                    <Typography variant="body2" color="green" sx={{ mt: 1 }}>
-                      No issues found
-                    </Typography>
-                  )}
+                      <div
+                        style={{
+                          border: "1px solid #ccc",
+                          display: "inline-block",
+                          padding: 4,
+                        }}
+                        dangerouslySetInnerHTML={{
+                          __html: `<svg 
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      style='max-width:200px; max-height:200px; overflow:auto;'
+                                    >
+                                      ${svgSnippet}
+                                    </svg>`,
+                        }}
+                      />
 
-                  {/* Suggestions from Gemini */}
-                  {suggestions && (
-                    <>
-                      <Typography variant="h6" sx={{ mt: 2 }}>
-                        Suggestions
-                      </Typography>
-                      <Typography variant="body2" sx={{ whiteSpace: "pre-wrap", mt: 1 }}>
-                        {suggestions}
-                      </Typography>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
+                      {hasLongReport ? (
+                        <Accordion sx={{ mt: 2 }}>
+                          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                            <Typography variant="h6">Details</Typography>
+                          </AccordionSummary>
+                          <AccordionDetails>
+                            {issues.length > 0 ? (
+                              <>
+                                <Typography variant="h6" sx={{ mt: 2 }}>
+                                  Issues
+                                </Typography>
+                                <ul style={{ marginTop: 8 }}>
+                                  {issues.map((issue, idx) => (
+                                    <li key={idx}>{issue}</li>
+                                  ))}
+                                </ul>
+                              </>
+                            ) : (
+                              <Typography variant="body2" color="green" sx={{ mt: 1 }}>
+                                No issues found
+                              </Typography>
+                            )}
+                            {suggestions && (
+                              <>
+                                <Typography variant="h6" sx={{ mt: 2 }}>
+                                  Suggestions
+                                </Typography>
+                                <Typography variant="body2" sx={{ whiteSpace: "pre-wrap", mt: 1 }}>
+                                  {suggestions}
+                                </Typography>
+                              </>
+                            )}
+                          </AccordionDetails>
+                        </Accordion>
+                      ) : (
+                        <>
+                          {issues.length > 0 ? (
+                            <>
+                              <Typography variant="h6" sx={{ mt: 2 }}>
+                                Issues
+                              </Typography>
+                              <ul style={{ marginTop: 8 }}>
+                                {issues.map((issue, idx) => (
+                                  <li key={idx}>{issue}</li>
+                                ))}
+                              </ul>
+                            </>
+                          ) : (
+                            <Typography variant="body2" color="green" sx={{ mt: 1 }}>
+                              No issues found
+                            </Typography>
+                          )}
+                          {suggestions && (
+                            <>
+                              <Typography variant="h6" sx={{ mt: 2 }}>
+                                Suggestions
+                              </Typography>
+                              <Typography variant="body2" sx={{ whiteSpace: "pre-wrap", mt: 1 }}>
+                                {suggestions}
+                              </Typography>
+                            </>
+                          )}
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Grid>
+              );
+            })}
+          </Grid>
         </Box>
       )}
     </Box>
