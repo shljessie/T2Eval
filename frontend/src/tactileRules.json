@@ -1,0 +1,55 @@
+{
+  "lines": {
+    "primary_lines": [
+      { "id": "3.4.3.2", "rule": "Primary lines must be a minimum of 1/2 inch (1.25 cm) in length." },
+      { "id": "3.4.3.3", "rule": "Dashed primary lines should have dashes of 1/4 to 3/8 inch (6 mm - 1 cm), with spaces approximately half the dash length." }
+    ],
+    "secondary_lines": [
+      { "id": "3.4.3.4", "rule": "Locational (Secondary) lines should be 1/2 inch (1.25 cm) or 1/4 inch (6 mm) long and shown as less significant than primary lines." },
+      { "id": "3.4.3.5", "rule": "Lead lines should be the least significant lines, 3/4 inch (2 cm) to 1-1/2 inches (3.75 cm) long, with no arrowheads." }
+    ],
+    "grid_lines": [
+      { "id": "3.4.3.8", "rule": "Grid lines must be less significant than other information on the graph." },
+      { "id": "3.4.3.9", "rule": "Grid lines should be at least 3/8 inch (1 cm) apart to avoid looking like an area texture." }
+    ]
+  },
+  "shapes": {
+    "minimum_sizes": [
+      { "id": "2.12", "rule": "Lines and objects must be designed for measurement with a braille ruler." },
+      { "id": "2.13", "rule": "Scales and graphics must be proportionate for accurate measurement." }
+    ],
+    "point_symbols": [
+      { "id": "3.4.3.11", "rule": "Point symbols should be at least 1/4 inch (6 mm) in diameter, with a minimum 1/8 inch (3 mm) space from other components." }
+    ],
+    "simple_geometric_shapes": [
+      { "id": "6.11.1.1", "rule": "A distinct line texture should be used to separate a shape from surrounding material." },
+      { "id": "6.11.1.2", "rule": "Simple shapes should be shown as solid (filled) objects." },
+      { "id": "6.11.1.3", "rule": "If enlarging, the print proportion must be retained." },
+      { "id": "6.11.1.4", "rule": "Plotted points on lines or objects need to be distinct from the lines or objects on which they are placed. Use a 1/8-inch (3-mm) blank space around a point to separate it from the surrounding material, and ensure the point is not smaller than 1/8 inch (3 mm) in diameter." },
+      { "id": "6.11.1.5", "rule": "Labels should be placed outside the shape if possible and 1/8 inch (3 mm) away from the shape or point symbol." },
+      { "id": "6.11.1.6", "rule": "Labels that are lengthy may be keyed to conserve space." },
+      { "id": "6.11.1.7", "rule": "In print, the degree symbol may be shown with each angle value; in braille, the degree symbol may be omitted altogether, with a transcriber’s note indicating its presence in print." },
+      { "id": "6.11.1.8", "rule": "The horizontal space between adjacent shapes should be a minimum of 2 blank cells." }
+    ],
+    "tessellations": [
+      { "id": "6.13", "rule": "A tessellation is an arrangement of shapes that forms a repeating pattern. The shapes fit together with no gaps or overlaps." },
+      { "id": "6.13.1", "rule": "Complex patterns should be simplified and enlarged. Show only enough to demonstrate how the shapes adjoin and form a repeating pattern." },
+      { "id": "6.13.2", "rule": "The shapes should not make a raised edge by overlapping each other, but should align to form one shared edge or one outline." }
+    ]
+  },
+  "depth_and_clarity": [
+    { "id": "2.10", "rule": "If depth is unnecessary, 3D views should be changed to 2D." },
+    { "id": "2.11", "rule": "Adjacent textures or intersecting lines should have blank space for clarity." },
+    { "id": "3.8.3", "rule": "When there are too many area textures or patterns required by the original print illustration to be tactually discriminable, the diagram can be separated or the number of areas can be reduced by combining similar areas." }
+  ],
+  "arrows": [
+    { "id": "3.4.3.7", "rule": "Arrows should have a shaft and either a solid triangle or an open arrowhead." }
+  ],
+  "paper_size": [
+    { "id": "3.4.4", "rule": "Paper graphics should maintain consistency across volumes for accessibility." }
+  ],
+  "keys_and_labels": [
+    { "id": "5.7", "rule": "Keys should list components in a defined order." },
+    { "id": "5.8", "rule": "Alphabetic and numeric keys should be used when there is no space for direct labels." }
+  ]
+}
