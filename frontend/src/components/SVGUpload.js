@@ -179,7 +179,12 @@ const SVGUpload = () => {
             const props = inferProperties(type, attributes);
             const localIssues = checkLocalRules(id, props);
             const { issues, suggestions } = await callGeminiForIssues(id, original, localIssues);
-            return [id, { type, svgSnippet: original, issues, suggestions }];
+            const evaluationLogic = `ASP Logic Evaluation:
+- Inferred Properties: ${props.join(', ') || 'None'}
+- Local Rules Applied: ${localIssues.join(', ') || 'None'}
+- Combined Issues: ${issues.join(', ') || 'None'}
+- Suggestions: ${suggestions || 'None'}`;
+            return [id, { type, svgSnippet: original, issues, suggestions, evaluationLogic }];
           });
 
           const results = await Promise.all(tasks);
@@ -220,14 +225,13 @@ const SVGUpload = () => {
       </label>
 
       {uploadedSVG && (
-        <Box sx={{ mt: 2 }}>
-          <Typography variant="h6">Uploaded Tactile Graphic</Typography>
+        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
           <Box
             sx={{
               border: "1px solid #ccc",
               display: "inline-block",
               p: 2,
-              width: '60%',
+              alignItems: "center",
               "& svg": { maxWidth: "100%", height: "auto" },
             }}
             dangerouslySetInnerHTML={{ __html: uploadedSVG }}
@@ -249,9 +253,9 @@ const SVGUpload = () => {
           <Typography variant="h6">Evaluation Report</Typography>
           <Grid container spacing={2}>
             {Object.entries(report).map(([id, data]) => {
-              const { type, svgSnippet, issues, suggestions } = data;
+              const { type, svgSnippet, issues = [], suggestions = "", evaluationLogic = "" } = data;
               const passed = issues.length === 0;
-              const hasLongReport = issues.length > 3 || suggestions.length > 100;
+              const hasLongReport = issues.length > 3 || suggestions.length > 100 || evaluationLogic.length > 50;
               return (
                 <Grid item xs={12} sm={4} key={id}>
                   <Card>
@@ -286,39 +290,51 @@ const SVGUpload = () => {
                       />
 
                       {hasLongReport ? (
-                        <Accordion sx={{ mt: 2 }}>
-                          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                            <Typography variant="h6">Details</Typography>
-                          </AccordionSummary>
-                          <AccordionDetails>
-                            {issues.length > 0 ? (
-                              <>
-                                <Typography variant="h6" sx={{ mt: 2 }}>
-                                  Issues
+                        <>
+                          <Accordion sx={{ mt: 2 }}>
+                            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                              <Typography variant="h6">Details</Typography>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                              {issues.length > 0 ? (
+                                <>
+                                  <Typography variant="h6" sx={{ mt: 2 }}>
+                                    Issues
+                                  </Typography>
+                                  <ul style={{ marginTop: 8 }}>
+                                    {issues.map((issue, idx) => (
+                                      <li key={idx}>{issue}</li>
+                                    ))}
+                                  </ul>
+                                </>
+                              ) : (
+                                <Typography variant="body2" color="green" sx={{ mt: 1 }}>
+                                  No issues found
                                 </Typography>
-                                <ul style={{ marginTop: 8 }}>
-                                  {issues.map((issue, idx) => (
-                                    <li key={idx}>{issue}</li>
-                                  ))}
-                                </ul>
-                              </>
-                            ) : (
-                              <Typography variant="body2" color="green" sx={{ mt: 1 }}>
-                                No issues found
+                              )}
+                              {suggestions && (
+                                <>
+                                  <Typography variant="h6" sx={{ mt: 2 }}>
+                                    Suggestions
+                                  </Typography>
+                                  <Typography variant="body2" sx={{ whiteSpace: "pre-wrap", mt: 1 }}>
+                                    {suggestions}
+                                  </Typography>
+                                </>
+                              )}
+                            </AccordionDetails>
+                          </Accordion>
+                          <Accordion sx={{ mt: 2 }}>
+                            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                              <Typography variant="h6">Evaluation Logic</Typography>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                              <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>
+                                {evaluationLogic}
                               </Typography>
-                            )}
-                            {suggestions && (
-                              <>
-                                <Typography variant="h6" sx={{ mt: 2 }}>
-                                  Suggestions
-                                </Typography>
-                                <Typography variant="body2" sx={{ whiteSpace: "pre-wrap", mt: 1 }}>
-                                  {suggestions}
-                                </Typography>
-                              </>
-                            )}
-                          </AccordionDetails>
-                        </Accordion>
+                            </AccordionDetails>
+                          </Accordion>
+                        </>
                       ) : (
                         <>
                           {issues.length > 0 ? (
@@ -347,6 +363,12 @@ const SVGUpload = () => {
                               </Typography>
                             </>
                           )}
+                          <Box sx={{ mt: 2 }}>
+                            <Typography variant="h6">Evaluation Logic</Typography>
+                            <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>
+                              {evaluationLogic}
+                            </Typography>
+                          </Box>
                         </>
                       )}
                     </CardContent>
