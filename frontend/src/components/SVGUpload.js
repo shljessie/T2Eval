@@ -4,10 +4,13 @@ import {
   Card,
   CardContent,
   CircularProgress,
+  FormControl,
   Grid,
   IconButton,
+  InputLabel,
   Menu,
   MenuItem,
+  Select,
   Slider,
   Switch,
   Typography,
@@ -21,6 +24,13 @@ import NavBar from "./NavBar";
 import ZoomInIcon from "@mui/icons-material/ZoomIn";
 import ZoomOutIcon from "@mui/icons-material/ZoomOut";
 import tactileRules from "../tactileRules.json";
+
+// Define paper sizes (in pixels, assuming 96 DPI)
+const paperSizes = {
+  A4: { width: 794, height: 1123 },
+  A5: { width: 560, height: 794 },
+  Letter: { width: 816, height: 1056 },
+};
 
 /************************************************
  (1) Recursively parse elements & store snippet
@@ -111,7 +121,7 @@ const callGeminiForIssues = async (id, snippet, localIssues) => {
     Below is an SVG snippet with ID: ${id}.
     It has the following local issues found by our rule-based system:
     ${localIssues.length ? localIssues.join("\\n") : "(None)"}
-
+    
     Evaluate the snippet for any additional issues or improvements
     the user should know about, from a tactile graphics perspective.
     Then list all issues (local + new) clearly, and provide suggestions.
@@ -189,6 +199,10 @@ const TactileGraphicEvaluator = () => {
   // Global settings
   const [globalOutlineThickness, setGlobalOutlineThickness] = useState(1);
   const [patternTileSize, setPatternTileSize] = useState(20);
+  const [paperSize, setPaperSize] = useState("A4");
+  const [paperOrientation, setPaperOrientation] = useState("portrait");
+  // New state for grid cell size (in pixels); default 96px = 1 inch at 96 DPI.
+  const [gridCellSize, setGridCellSize] = useState(96);
 
   const canvasRef = useRef(null);
 
@@ -297,7 +311,6 @@ const TactileGraphicEvaluator = () => {
     patterns.forEach((pattern) => {
       pattern.setAttribute("width", size);
       pattern.setAttribute("height", size);
-      // Optionally update child elements here if needed.
     });
     setTactileSVG(svg.outerHTML);
   };
@@ -347,11 +360,7 @@ const TactileGraphicEvaluator = () => {
       pattern.appendChild(rect);
     } else if (patternType === "waves") {
       const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-      // Create a wave based on the current tile size.
-      path.setAttribute(
-        "d",
-        `M0,${patternTileSize / 2} Q${patternTileSize / 2},0 ${patternTileSize},${patternTileSize / 2} L${patternTileSize},${patternTileSize} L0,${patternTileSize} Z`
-      );
+      path.setAttribute("d", `M0,${patternTileSize / 2} Q${patternTileSize / 2},0 ${patternTileSize},${patternTileSize / 2} L${patternTileSize},${patternTileSize} L0,${patternTileSize} Z`);
       path.setAttribute("fill", "black");
       pattern.appendChild(path);
     } else if (patternType === "crosshatch") {
@@ -471,10 +480,8 @@ const TactileGraphicEvaluator = () => {
     const patternId = `pattern-${id}`;
     const pattern = defs.querySelector(`#${patternId}`);
     if (!pattern) return;
-    // Update tile size for the pattern.
     pattern.setAttribute("width", newSize);
     pattern.setAttribute("height", newSize);
-    // Update child elements accordingly.
     if (pattern.querySelector("circle")) {
       const circle = pattern.querySelector("circle");
       circle.setAttribute("cx", newSize / 2);
@@ -557,29 +564,62 @@ const TactileGraphicEvaluator = () => {
   }, [currentEvalIndex, errorEvaluations, viewMode]);
 
   const displayedSVG = viewMode === "tactile" ? tactileSVG : originalSVG;
+  const paper = paperSizes[paperSize];
+  const finalPaperWidth = paperOrientation === "portrait" ? paper.width : paper.height;
+  const finalPaperHeight = paperOrientation === "portrait" ? paper.height : paper.width;
+
+  // Create grid numbers outside the paper.
+  // Horizontal numbers above the paper.
+  const horizontalNumbers = (
+    <Box
+      sx={{
+        display: "flex",
+        position: "relative",
+        width: finalPaperWidth,
+        justifyContent: "space-between",
+        mb: 1,
+      }}
+    >
+      {Array.from({ length: Math.floor(finalPaperWidth / gridCellSize) + 1 }).map((_, i) => (
+        <Typography key={`x-${i}`} variant="caption">
+          {((i * gridCellSize) / 96).toFixed(1)} in
+        </Typography>
+      ))}
+    </Box>
+  );
+  // Vertical numbers to the left of the paper.
+  const verticalNumbers = (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height: finalPaperHeight,
+        justifyContent: "space-between",
+        mr: 1,
+      }}
+    >
+      {Array.from({ length: Math.floor(finalPaperHeight / gridCellSize) + 1 }).map((_, j) => (
+        <Typography key={`y-${j}`} variant="caption">
+          {((j * gridCellSize) / 96).toFixed(1)} in
+        </Typography>
+      ))}
+    </Box>
+  );
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-      <style>{`
-        .highlight {
-          stroke: red !important;
-          stroke-width: 3px !important;
-          filter: drop-shadow(0 0 5px red);
-          transition: all 0.3s ease;
-        }
-      `}</style>
-
+    <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", position: "relative" }}>
       <NavBar />
-
       <Grid container sx={{ flex: 1 }}>
         <Grid item xs={12} sm={3} sx={{ borderRight: "1px solid #ccc", p: 2, overflowY: "auto" }}>
+          {/* Sidebar content remains unchanged */}
           <Box sx={{ mb: 3 }}>
             <input id="file-input" type="file" accept=".svg" onChange={handleFileChange} style={{ display: "none" }} />
             <label htmlFor="file-input">
-              <Button variant="contained" component="span" fullWidth>Upload SVG</Button>
+              <Button variant="contained" component="span" fullWidth>
+                Upload SVG
+              </Button>
             </label>
           </Box>
-
           {originalSVG && tactileSVG && (
             <Box sx={{ mb: 3 }}>
               <Typography variant="body2">Toggle View</Typography>
@@ -593,20 +633,20 @@ const TactileGraphicEvaluator = () => {
               </Box>
             </Box>
           )}
-
           <Box sx={{ mb: 3 }}>
             <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
               <IconButton onClick={handleZoomOut} color="primary">
                 <ZoomOutIcon />
               </IconButton>
-              <Typography variant="body1" sx={{ alignSelf: "center" }}>{Math.round(scale * 100)}%</Typography>
+              <Typography variant="body1" sx={{ alignSelf: "center" }}>
+                {Math.round(scale * 100)}%
+              </Typography>
               <IconButton onClick={handleZoomIn} color="primary">
                 <ZoomInIcon />
               </IconButton>
             </Box>
             <Slider value={scale} min={0.1} max={3} step={0.1} onChange={(e, value) => setScale(value)} aria-labelledby="zoom-slider" />
           </Box>
-
           <Box sx={{ mb: 3 }}>
             <Typography variant="body2">Global Outline Thickness</Typography>
             <Slider
@@ -618,7 +658,48 @@ const TactileGraphicEvaluator = () => {
               aria-labelledby="outline-slider"
             />
           </Box>
-
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="body2">Global Pattern Tile Size</Typography>
+            <Slider
+              value={patternTileSize}
+              min={10}
+              max={50}
+              step={1}
+              onChange={(e, value) => updateGlobalPatternTileSize(value)}
+              aria-labelledby="pattern-slider"
+            />
+          </Box>
+          <Box sx={{ mb: 3 }}>
+            <FormControl fullWidth>
+              <InputLabel id="paper-size-label">Paper Size</InputLabel>
+              <Select labelId="paper-size-label" value={paperSize} label="Paper Size" onChange={(e) => setPaperSize(e.target.value)}>
+                {Object.keys(paperSizes).map((size) => (
+                  <MenuItem key={size} value={size}>
+                    {size}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="body2">Paper Orientation</Typography>
+            <Switch
+              checked={paperOrientation === "landscape"}
+              onChange={() => setPaperOrientation((prev) => (prev === "portrait" ? "landscape" : "portrait"))}
+            />
+            <Typography variant="caption">{paperOrientation === "portrait" ? "Portrait" : "Landscape"}</Typography>
+          </Box>
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="body2">Grid Cell Size (px)</Typography>
+            <Slider
+              value={gridCellSize}
+              min={48}
+              max={144}
+              step={1}
+              onChange={(e, value) => setGridCellSize(value)}
+              aria-labelledby="grid-slider"
+            />
+          </Box>
           <Box>
             <Typography variant="h8" gutterBottom>Evaluation Report</Typography>
             <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
@@ -670,7 +751,6 @@ const TactileGraphicEvaluator = () => {
               !loading && <Typography variant="body2">No issues found in evaluations.</Typography>
             )}
           </Box>
-
           {errorEvaluations.length > 0 && (
             <Box sx={{ mt: 3 }}>
               <Typography variant="h8" gutterBottom>Interactive Enhancements</Typography>
@@ -703,7 +783,9 @@ const TactileGraphicEvaluator = () => {
                     <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                       <Typography variant="subtitle2">Pattern Fill</Typography>
                       <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                        <Button variant="outlined" onClick={() => handleRemovePatternFill(currentId)}>Original</Button>
+                        <Button variant="outlined" onClick={() => handleRemovePatternFill(currentId)}>
+                          Original
+                        </Button>
                         <Button variant="outlined" onClick={() => handlePatternFill(currentId, "dotted")}>Dotted</Button>
                         <Button variant="outlined" onClick={() => handlePatternFill(currentId, "stripes")}>Stripes</Button>
                         <Button variant="outlined" onClick={() => handlePatternFill(currentId, "waves")}>Waves</Button>
@@ -725,7 +807,6 @@ const TactileGraphicEvaluator = () => {
               })()}
             </Box>
           )}
-
           <Box sx={{ mb: 3, mt: 3 }}>
             <Button variant="outlined" fullWidth onClick={(e) => setExportAnchorEl(e.currentTarget)}>
               Export
@@ -737,13 +818,83 @@ const TactileGraphicEvaluator = () => {
             </Menu>
           </Box>
         </Grid>
-
         <Grid item xs={12} sm={9} sx={{ p: 2, display: "flex", justifyContent: "center", alignItems: "center", overflow: "auto" }}>
-          {displayedSVG ? (
-            <Box ref={canvasRef} sx={{ p: 2, transform: `scale(${scale})` }} dangerouslySetInnerHTML={{ __html: displayedSVG }} />
-          ) : (
-            <Typography variant="h6" color="textSecondary">SVG will be displayed here.</Typography>
-          )}
+          {/* Outer container for paper with grid numbers outside */}
+          <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            {/* Horizontal numbers above paper */}
+            <Box
+              sx={{
+                display: "flex",
+                width: finalPaperWidth,
+                justifyContent: "space-between",
+                mb: 1,
+              }}
+            >
+              {Array.from({ length: Math.floor(finalPaperWidth / gridCellSize) + 1 }).map((_, i) => (
+                <Typography key={`x-${i}`} variant="caption">
+                  {((i * gridCellSize) / 96).toFixed(1)} in
+                </Typography>
+              ))}
+            </Box>
+            <Box sx={{ display: "flex" }}>
+              {/* Vertical numbers to the left */}
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  height: finalPaperHeight,
+                  justifyContent: "space-between",
+                  mr: 1,
+                }}
+              >
+                {Array.from({ length: Math.floor(finalPaperHeight / gridCellSize) + 1 }).map((_, j) => (
+                  <Typography key={`y-${j}`} variant="caption">
+                    {((j * gridCellSize) / 96).toFixed(1)} in
+                  </Typography>
+                ))}
+              </Box>
+              {/* Paper container */}
+              <Box
+                sx={{
+                  width: finalPaperWidth,
+                  height: finalPaperHeight,
+                  position: "relative",
+                  border: "1px solid #ccc",
+                  backgroundColor: "white",
+                  overflow: "hidden",
+                }}
+              >
+                {/* Grid lines background inside paper (optional) */}
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "100%",
+                    pointerEvents: "none",
+                    backgroundImage: `linear-gradient(to right, #ddd 1px, transparent 1px), 
+                                      linear-gradient(to bottom, #ddd 1px, transparent 1px)`,
+                    backgroundSize: `${gridCellSize}px ${gridCellSize}px`,
+                  }}
+                />
+                {displayedSVG && (
+                  <Box
+                    ref={canvasRef}
+                    sx={{
+                      p: 2,
+                      position: "absolute",
+                      top: "50%",
+                      left: "50%",
+                      transform: `translate(-50%, -50%) scale(${scale})`,
+                      transformOrigin: "top left",
+                    }}
+                    dangerouslySetInnerHTML={{ __html: displayedSVG }}
+                  />
+                )}
+              </Box>
+            </Box>
+          </Box>
         </Grid>
       </Grid>
     </Box>
