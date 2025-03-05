@@ -11,3 +11,8 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.highlight {
+  stroke: red !important;
+  stroke-width: 3 !important;
+}

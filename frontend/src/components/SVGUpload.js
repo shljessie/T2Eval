@@ -560,6 +560,18 @@ const TactileGraphicEvaluator = () => {
     const target = canvasRef.current.querySelector(`#${currentId}`);
     if (target) {
       target.classList.add("highlight");
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [currentEvalIndex, errorEvaluations, viewMode]);
+
+  useEffect(() => {
+    if (!canvasRef.current || !errorEvaluations.length) return;
+    const highlighted = canvasRef.current.querySelectorAll(".highlight");
+    highlighted.forEach((el) => el.classList.remove("highlight"));
+    const [currentId] = errorEvaluations[currentEvalIndex];
+    const target = canvasRef.current.querySelector(`#${currentId}`);
+    if (target) {
+      target.classList.add("highlight");
     }
   }, [currentEvalIndex, errorEvaluations, viewMode]);
 
