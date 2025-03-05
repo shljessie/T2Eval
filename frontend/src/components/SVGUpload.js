@@ -622,7 +622,6 @@ const TactileGraphicEvaluator = () => {
           </Box>
           {originalSVG && tactileSVG && (
             <Box sx={{ mb: 3 }}>
-              <Typography variant="body2">Toggle View</Typography>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Typography variant="body2">Original</Typography>
                 <Switch
@@ -645,8 +644,43 @@ const TactileGraphicEvaluator = () => {
                 <ZoomInIcon />
               </IconButton>
             </Box>
-            <Slider value={scale} min={0.1} max={3} step={0.1} onChange={(e, value) => setScale(value)} aria-labelledby="zoom-slider" />
           </Box>
+
+          <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
+            <FormControl fullWidth>
+              <InputLabel id="paper-size-label">Paper Size</InputLabel>
+              <Select
+                labelId="paper-size-label"
+                value={paperSize}
+                label="Paper Size"
+                onChange={(e) => setPaperSize(e.target.value)}
+              >
+                {Object.keys(paperSizes).map((size) => (
+                  <MenuItem key={size} value={size}>
+                    {size}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Switch
+                checked={paperOrientation === "landscape"}
+                onChange={() =>
+                  setPaperOrientation((prev) =>
+                    prev === "portrait" ? "landscape" : "portrait"
+                  )
+                }
+              />
+              <Typography variant="caption">
+                {paperOrientation === "portrait" ? "Portrait" : "Landscape"}
+              </Typography>
+            </Box>
+          </Box>
+
+
+
+
+
           <Box sx={{ mb: 3 }}>
             <Typography variant="body2">Global Outline Thickness</Typography>
             <Slider
@@ -658,54 +692,14 @@ const TactileGraphicEvaluator = () => {
               aria-labelledby="outline-slider"
             />
           </Box>
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="body2">Global Pattern Tile Size</Typography>
-            <Slider
-              value={patternTileSize}
-              min={10}
-              max={50}
-              step={1}
-              onChange={(e, value) => updateGlobalPatternTileSize(value)}
-              aria-labelledby="pattern-slider"
-            />
-          </Box>
-          <Box sx={{ mb: 3 }}>
-            <FormControl fullWidth>
-              <InputLabel id="paper-size-label">Paper Size</InputLabel>
-              <Select labelId="paper-size-label" value={paperSize} label="Paper Size" onChange={(e) => setPaperSize(e.target.value)}>
-                {Object.keys(paperSizes).map((size) => (
-                  <MenuItem key={size} value={size}>
-                    {size}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Box>
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="body2">Paper Orientation</Typography>
-            <Switch
-              checked={paperOrientation === "landscape"}
-              onChange={() => setPaperOrientation((prev) => (prev === "portrait" ? "landscape" : "portrait"))}
-            />
-            <Typography variant="caption">{paperOrientation === "portrait" ? "Portrait" : "Landscape"}</Typography>
-          </Box>
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="body2">Grid Cell Size (px)</Typography>
-            <Slider
-              value={gridCellSize}
-              min={48}
-              max={144}
-              step={1}
-              onChange={(e, value) => setGridCellSize(value)}
-              aria-labelledby="grid-slider"
-            />
-          </Box>
+
+
           <Box>
-            <Typography variant="h8" gutterBottom>Evaluation Report</Typography>
             <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
               <IconButton onClick={() => setCurrentEvalIndex((prev) => (prev - 1 + errorEvaluations.length) % errorEvaluations.length)}>
                 <ArrowBackIosIcon />
               </IconButton>
+              <Typography variant="h8" gutterBottom>Evaluation Report</Typography>
               <IconButton onClick={() => setCurrentEvalIndex((prev) => (prev + 1) % errorEvaluations.length)}>
                 <ArrowForwardIosIcon />
               </IconButton>
@@ -753,7 +747,7 @@ const TactileGraphicEvaluator = () => {
           </Box>
           {errorEvaluations.length > 0 && (
             <Box sx={{ mt: 3 }}>
-              <Typography variant="h8" gutterBottom>Interactive Enhancements</Typography>
+              <Typography variant="h8" gutterBottom>Authoring</Typography>
               {(() => {
                 const [currentId, currentData] = errorEvaluations[currentEvalIndex];
                 if (currentData.type === "line") {
@@ -796,7 +790,7 @@ const TactileGraphicEvaluator = () => {
                         <Slider
                           defaultValue={patternTileSize}
                           min={5}
-                          max={100}
+                          max={30}
                           step={1}
                           onChangeCommitted={(e, value) => handleIndividualPatternTileSize(currentId, value)}
                         />
